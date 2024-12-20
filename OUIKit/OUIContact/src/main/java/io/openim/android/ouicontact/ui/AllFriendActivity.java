@@ -35,7 +35,7 @@ import io.openim.android.ouicore.utils.Routes;
 import io.openim.android.ouicore.vm.SelectTargetVM;
 import io.openim.android.ouicore.vm.SocialityVM;
 import io.openim.android.ouicore.widget.StickyDecoration;
-import io.openim.android.sdk.models.FriendInfo;
+import io.openim.android.sdk.models.UserInfo;
 
 @Route(path = Routes.Contact.ALL_FRIEND)
 public class AllFriendActivity extends BaseActivity<SocialityVM, ActivityAllFriendBinding> {
@@ -139,7 +139,7 @@ public class AllFriendActivity extends BaseActivity<SocialityVM, ActivityAllFrie
             public void onBindView(@NonNull RecyclerView.ViewHolder holder, ExUserInfo data,
                                    int position) {
                 ViewHol.ItemViewHo itemViewHo = (ViewHol.ItemViewHo) holder;
-                FriendInfo friendInfo = data.userInfo.getFriendInfo();
+                UserInfo friendInfo = data.userInfo;
                 itemViewHo.view.avatar.load(friendInfo.getFaceURL());
                 itemViewHo.view.nickName.setText(friendInfo.getNickname());
 

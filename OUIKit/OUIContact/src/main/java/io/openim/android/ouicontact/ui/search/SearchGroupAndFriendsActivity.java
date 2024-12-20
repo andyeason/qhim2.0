@@ -42,6 +42,7 @@ public class SearchGroupAndFriendsActivity extends BaseActivity<SearchVM,
     private static final int TITLE = 0;
     private static final int CONTACT_ITEM = 1;
     private static final int GROUP_ITEM = 2;
+    private static final int ORG_ITEM = 3;
     private RecyclerViewAdapter adapter;
 
     private Set<MultipleChoice> result = new HashSet<>();
@@ -126,7 +127,6 @@ public class SearchGroupAndFriendsActivity extends BaseActivity<SearchVM,
         vm.groupsInfo.observe(this, groupInfos -> {
             addNape(getString(io.openim.android.ouicore.R.string.group), groupInfos);
         });
-
     }
 
     private void addNape(String title, List data) {
@@ -161,7 +161,7 @@ public class SearchGroupAndFriendsActivity extends BaseActivity<SearchVM,
             public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,
                                                               int viewType) {
                 if (viewType == TITLE) return new ViewHol.TitleViewHolder(parent);
-                if (viewType == CONTACT_ITEM || viewType == GROUP_ITEM)
+                if (viewType == CONTACT_ITEM || viewType == GROUP_ITEM || viewType == ORG_ITEM)
                     return new ViewHol.ItemViewHo(parent);
 
                 return super.onCreateViewHolder(parent, viewType);
@@ -239,12 +239,16 @@ public class SearchGroupAndFriendsActivity extends BaseActivity<SearchVM,
                         try {
                             SelectTargetVM selectTargetVM = Easy.find(SelectTargetVM.class);
                             if (null != selectTargetVM) {
-                                selectTargetVM.addMetaData(multipleChoice.key,
-                                    multipleChoice.name, multipleChoice.icon);
-                                if (selectTargetVM.isSingleSelect())
-                                    selectTargetVM.toFinish();
-                                else
+                                if (selectTargetVM.isSingleSelect()) {
+                                    if (null != selectTargetVM.metaData.val()
+                                        && !selectTargetVM.metaData.val().isEmpty()) {
+                                        selectTargetVM.removeMetaData(selectTargetVM.metaData.val().get(0).key);
+                                    }
+                                    selectTargetVM.addMetaData(multipleChoice.key,
+                                        multipleChoice.name, multipleChoice.icon);
+
                                     selectTargetVM.finishIntention();
+                                }
                             }
                             return;
                         } catch (Exception ignore) {

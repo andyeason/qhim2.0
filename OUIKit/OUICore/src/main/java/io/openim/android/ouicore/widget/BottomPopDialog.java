@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import io.openim.android.ouicore.R;
 import io.openim.android.ouicore.base.BaseDialog;
 import io.openim.android.ouicore.databinding.DialogPhotographAlbumBinding;
-import io.openim.android.ouicore.databinding.LayoutBottompopV3Binding;
 import io.openim.android.ouicore.databinding.LayoutCommonDialogBinding;
 
 public class BottomPopDialog extends BaseDialog {

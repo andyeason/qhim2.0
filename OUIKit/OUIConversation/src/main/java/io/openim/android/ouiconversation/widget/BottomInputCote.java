@@ -5,7 +5,9 @@ import static android.view.View.VISIBLE;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.Editable;
@@ -13,18 +15,21 @@ import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.ReplacementSpan;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.MutableLiveData;
 
 import com.hjq.permissions.Permission;
 
@@ -64,6 +69,7 @@ public class BottomInputCote {
 
     InputExpandFragment inputExpandFragment;
     public LayoutInputCoteBinding view;
+    TouchVoiceDialogV3 touchVoiceDialog;
     //是否可发送内容
     private boolean isSend;
     //是否已绑定草稿
@@ -77,14 +83,14 @@ public class BottomInputCote {
 
         initView(view);
 
-        Common.UIHandler.postDelayed(() -> hasMicrophone = new HasPermissions(context,
-            Permission.RECORD_AUDIO), 300);
+        Common.UIHandler.postDelayed(() -> hasMicrophone = new HasPermissions(context, Permission.RECORD_AUDIO), 300);
 
         view.chatMoreOrSend.setOnClickListener(chatMoreOrSendClick = new OnDedrepClickListener() {
             @Override
             public void click(View v) {
                 if (!isSend) {
                     view.voice.setChecked(false);
+                    vm.mTypingState.postValue(false);
                     clearFocus();
                     Common.hideKeyboard(BaseApp.inst(), v);
                     view.fragmentContainer.setVisibility(VISIBLE);
@@ -93,44 +99,47 @@ public class BottomInputCote {
                 }
 
                 List<AtUser> atUsers = vm.atUsers.getValue();
-                final Message msg;
+                Message msg = null;
                 if (!atUsers.isEmpty()) {
                     List<String> atUserIDList = new ArrayList<>();
                     List<AtUserInfo> atUserInfoList = new ArrayList<>();
 
                     Editable msgEdit = view.chatInput.getText();
-                    final ForegroundColorSpan spans[] = view.chatInput.getText().getSpans(0,
-                        view.chatInput.getText().length(), ForegroundColorSpan.class);
+                    final UneditableSpan[] spans = view.chatInput.getText().getSpans(0, view.chatInput.getText().length(), UneditableSpan.class);
                     for (AtUser atUser : atUsers) {
-                        atUserIDList.add(atUser.key);
-                        AtUserInfo atUserInfo = new AtUserInfo();
-                        atUserInfo.setAtUserID(atUser.key);
-                        atUserInfo.setGroupNickname(atUser.name);
-                        atUserInfoList.add(atUserInfo);
-
+                        if (!BaseApp.inst().loginCertificate.userID.equals(atUser.key)) {
+                            atUserIDList.add(atUser.key);
+                            AtUserInfo atUserInfo = new AtUserInfo();
+                            atUserInfo.setAtUserID(atUser.key);
+                            atUserInfo.setGroupNickname(atUser.name);
+                            atUserInfoList.add(atUserInfo);
+                        }
                         try {
-                            for (ForegroundColorSpan span : spans) {
+                            for (UneditableSpan span : spans) {
                                 if (span == null) continue;
                                 if (atUser.spanHashCode == span.hashCode()) {
-                                    final int spanStart =
-                                        view.chatInput.getText().getSpanStart(span);
+                                    final int spanStart = view.chatInput.getText().getSpanStart(span);
                                     final int spanEnd = view.chatInput.getText().getSpanEnd(span);
-                                    msgEdit.replace(spanStart, spanEnd,
-                                        IMUtil.atD(atUser.key));
+                                    msgEdit.replace(spanStart, spanEnd, IMUtil.atD(atUser.key));
                                 }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
-                    msg =
-                        OpenIMClient.getInstance().messageManager.createTextAtMessage(msgEdit.toString(), atUserIDList, atUserInfoList, vm.replyMessage.val());
+                    if (!atUserIDList.isEmpty()) {
+                        msg = OpenIMClient.getInstance().messageManager.createTextAtMessage(
+                            msgEdit.toString(),
+                            atUserIDList,
+                            atUserInfoList,
+                            vm.replyMessage.val());
+                    }
+                    else
+                        msg = OpenIMClient.getInstance().messageManager.createTextMessage(vm.inputMsg.val().toString());
                 } else if (null != vm.replyMessage.getValue()) {
-                    msg =
-                        OpenIMClient.getInstance().messageManager.createQuoteMessage(vm.inputMsg.val().toString(), vm.replyMessage.getValue());
-                } else {
-                    msg =
-                        OpenIMClient.getInstance().messageManager.createTextMessage(vm.inputMsg.val().toString());
+                    msg = OpenIMClient.getInstance().messageManager.createQuoteMessage(vm.inputMsg.val().toString(), vm.replyMessage.getValue());
+                } else if (!TextUtils.isEmpty(vm.inputMsg.val().toString())) {
+                    msg = OpenIMClient.getInstance().messageManager.createTextMessage(vm.inputMsg.val().toString());
                 }
                 if (null != msg) {
                     vm.sendMsg(msg);
@@ -139,15 +148,40 @@ public class BottomInputCote {
             }
         });
         view.voice.setOnCheckedChangeListener((v, isChecked) -> {
+            clearFocus();
+            vm.mTypingState.postValue(false);
+            view.inputLy.setVisibility(isChecked ? GONE : VISIBLE);
+            view.touchSay.setVisibility(isChecked ? VISIBLE : GONE);
+            Common.hideKeyboard(BaseApp.inst(), v);
+            setExpandHide(true);
+        });
+        view.touchSay.setOnLongClickListener(v -> {
+            if (null == touchVoiceDialog) {
+                touchVoiceDialog = new TouchVoiceDialogV3(context);
+                touchVoiceDialog.setOnSelectResultListener(new TouchVoiceDialogV3.OnSelectResultListener() {
+                    @Override
+                    public void result(int code, Uri audioPath, int duration) {
+                        if (code == 0) {
+                            //录音结束
+                            Message message = OpenIMClient.getInstance().messageManager.createSoundMessageFromFullPath(audioPath.getPath(), duration);
+                            vm.sendMsg(message);
+                        }
+                    }
 
+                    @Override
+                    public void onViewChange(int code) {
+                        view.touchSay.setText(code == 0 ? io.openim.android.ouicore.R.string.chat_record_tips3 : io.openim.android.ouicore.R.string.chat_record_tips2);
+                    }
+                });
+                touchVoiceDialog.setOnShowListener(dialog -> showingViewChange());
+                touchVoiceDialog.setOnDismissListener(dialog -> showingViewChange());
+            }
+            hasMicrophone.safeGo(() -> touchVoiceDialog.show());
+            return false;
         });
 
         view.chatInput.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) setExpandHide(false);
-        });
-
-        view.emoji.setOnClickListener(v -> {
-
         });
         view.cancelReply.setOnClickListener(v -> vm.replyMessage.setValue(null));
         view.chatInput.addTextChangedListener(new TextWatcher() {
@@ -161,12 +195,12 @@ public class BottomInputCote {
                 try {
                     if (vm.isSingleChat) return;
                     if (count == 0) return;
-                    String content = s.toString().substring(s.length() - 1);
-                    if (!TextUtils.isEmpty(content) && null != onAtUserListener) {
-                        if (content.equals("@")) {
-                            onAtUserListener.onAtUser();
-                        }
+                    if (count == 1 && s.charAt(start) == '@') {
+                        onAtUserListener.onAtUser();
                     }
+                    vm.mTypingState.setValue(true);
+                    Common.UIHandler.removeCallbacks(vm.finishInputting);
+                    Common.UIHandler.postDelayed(vm.finishInputting, 3000L);
                 } catch (Exception ignore) {
                 }
             }
@@ -186,6 +220,16 @@ public class BottomInputCote {
             }
             return true;
         });
+        view.fragmentContainer.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) setExpandHide(true);
+        });
+//        view.chatInput.getViewTreeObserver().addOnDrawListener(() -> {
+//            Editable inputContent = view.chatInput.getEditableText();
+//            Object[] atSpan = inputContent.getSpans(0, view.chatInput.getSelectionEnd(), Object.class);
+////            if (atSpan.length > 0) {
+////                view.chatInput.setSelection(atSpan[atSpan.length - 1].);
+////            }
+//        });
     }
 
     private void initView(LayoutInputCoteBinding view) {
@@ -213,6 +257,17 @@ public class BottomInputCote {
         this.onAtUserListener = onAtUserListener;
     }
 
+    private void showingViewChange() {
+        boolean showing = touchVoiceDialog.isShowing();
+        if (showing) {
+            view.touchSay.setBackground(AppCompatResources.getDrawable(context, io.openim.android.ouicore.R.drawable.sty_radius_4_33shallow));
+            view.touchSay.setTextColor(context.getResources().getColor(io.openim.android.ouicore.R.color.white));
+        } else {
+            view.touchSay.setBackground(AppCompatResources.getDrawable(context, io.openim.android.ouicore.R.drawable.sty_radius_4_white));
+            view.touchSay.setTextColor(context.getResources().getColor(io.openim.android.ouicore.R.color.txt_black));
+            view.touchSay.setText(io.openim.android.ouicore.R.string.touch_say);
+        }
+    }
 
     private void setSendButton(boolean isSend) {
         if (BottomInputCote.this.isSend == isSend) return;
@@ -233,7 +288,11 @@ public class BottomInputCote {
     private void initFragment() {
         inputExpandFragment = new InputExpandFragment();
         inputExpandFragment.setPage(1);
+    }
 
+    public void dispatchTouchEvent(MotionEvent event) {
+        if (null != touchVoiceDialog && touchVoiceDialog.isShowing())
+            touchVoiceDialog.dispatchTouchEvent(event);
     }
 
     public void clearFocus() {
@@ -254,15 +313,21 @@ public class BottomInputCote {
         vm.conversationInfo.observe((LifecycleOwner) context, conversationInfo -> bindDraft());
         vm.atUsers.observe((LifecycleOwner) context, atUsers -> {
             if (atUsers.isEmpty()) return;
-            AtUser atUser;
-            SpannableString spannableString = new SpannableString(
-                IMUtil.atD((atUser =
-                    atUsers.get(atUsers.size() - 1)).name));
-            ForegroundColorSpan colorSpan = new ForegroundColorSpan(Color.parseColor("#009ad6"));
-            spannableString.setSpan(colorSpan, 0, spannableString.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            atUser.spanHashCode = colorSpan.hashCode();
-            view.chatInput.append(spannableString);
+            Editable editable = view.chatInput.getText();
+            for (AtUser result : atUsers) {
+                SpannableString spannableString = new SpannableString(IMUtil.atD(result.name));
+                UneditableSpan uneditableSpan = new UneditableSpan(spannableString).setForegroundColor(Color.parseColor("#ff009ad6"));
+                spannableString.setSpan(uneditableSpan, 0, spannableString.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (!TextUtils.isEmpty(editable)) {
+                    if (!String.valueOf(editable).contains(spannableString)) {
+                        result.spanHashCode = uneditableSpan.hashCode();
+                        editable.insert(getCurrentInputPosition(), spannableString);
+                    }
+                } else {
+                    result.spanHashCode = uneditableSpan.hashCode();
+                    view.chatInput.append(spannableString);
+                }
+            }
         });
         vm.emojiMessages.observe((LifecycleOwner) context, messages -> {
             if (messages.isEmpty()) return;
@@ -272,8 +337,7 @@ public class BottomInputCote {
             Drawable drawable = BaseApp.inst().getResources().getDrawable(emojiId);
             drawable.setBounds(0, 0, Common.dp2px(22), Common.dp2px(22));
             ImageSpan imageSpan = new ImageSpan(drawable);
-            spannableString.setSpan(imageSpan, 0, emojiKey.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannableString.setSpan(imageSpan, 0, emojiKey.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             view.chatInput.append(spannableString);
         });
         view.chatInput.setOnKeyListener((v, keyCode, event) -> {
@@ -283,6 +347,7 @@ public class BottomInputCote {
             }
             return false;
         });
+
 
         if (!vm.isSingleChat) {
             vm.memberInfo.observe((LifecycleOwner) context, mem -> {
@@ -294,8 +359,7 @@ public class BottomInputCote {
                 setMute();
             });
             vm.isJoinGroup.observe((LifecycleOwner) context, isJoin -> {
-                String tips=!isJoin?((Context) context)
-                    .getString(io.openim.android.ouicore.R.string.quited_tips):null;
+                String tips = !isJoin ? ((Context) context).getString(io.openim.android.ouicore.R.string.quited_tips) : null;
                 setHighTips(tips);
             });
         }
@@ -320,6 +384,10 @@ public class BottomInputCote {
             view.tips.setText(tips);
         }
 
+    }
+
+    public int getCurrentInputPosition() {
+        return view.chatInput.getSelectionStart();
     }
 
     private void setMute() {
@@ -375,8 +443,7 @@ public class BottomInputCote {
     private void switchFragment(BaseFragment fragment) {
         try {
             if (fragment != null && !fragment.isVisible() && mCurrentTabIndex != fragment.getPage()) {
-                FragmentTransaction transaction =
-                    ((BaseActivity) context).getSupportFragmentManager().beginTransaction();
+                FragmentTransaction transaction = ((BaseActivity) context).getSupportFragmentManager().beginTransaction();
                 if (!fragment.isAdded()) {
                     transaction.add(view.fragmentContainer.getId(), fragment);
                 }
@@ -394,6 +461,34 @@ public class BottomInputCote {
 
     public interface OnAtUserListener {
         void onAtUser();
+    }
+
+    private static class UneditableSpan extends ReplacementSpan {
+
+        private final SpannableString mSpannableString;
+        private int mForegroundColor;
+
+        public UneditableSpan(@NonNull SpannableString spannableString) {
+            mSpannableString = spannableString;
+        }
+
+        public UneditableSpan setForegroundColor(int foregroundColor) {
+            mForegroundColor = foregroundColor;
+            return this;
+        }
+
+        @Override
+        public int getSize(Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
+            return (int) paint.measureText(mSpannableString, 0, mSpannableString.length());
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, @NonNull Paint paint) {
+            int originalColor = paint.getColor();
+            paint.setColor(mForegroundColor);
+            canvas.drawText(mSpannableString, 0, mSpannableString.length(), x, y, paint);
+            paint.setColor(originalColor);
+        }
     }
 
 }

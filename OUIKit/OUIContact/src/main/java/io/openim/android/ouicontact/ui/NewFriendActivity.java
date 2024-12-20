@@ -19,6 +19,7 @@ import io.openim.android.ouicontact.databinding.ItemFriendNoticeBinding;
 import io.openim.android.ouicontact.vm.ContactVM;
 import io.openim.android.ouicore.adapter.RecyclerViewAdapter;
 import io.openim.android.ouicore.base.BaseActivity;
+import io.openim.android.ouicore.base.vm.injection.Easy;
 import io.openim.android.ouicore.utils.Constants;
 import io.openim.android.ouicore.utils.Routes;
 import io.openim.android.ouicore.utils.SinkHelper;
@@ -29,7 +30,9 @@ public class NewFriendActivity extends BaseActivity<ContactVM, ActivityNewFriend
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        bindVM(ContactVM.class, true);
+        vm= Easy.find(ContactVM.class);
+        vm.setContext(this);
+        vm.setIView(this);
         super.onCreate(savedInstanceState);
         bindViewDataBinding(ActivityNewFriendBinding.inflate(getLayoutInflater()));
         setLightStatus();
@@ -43,7 +46,6 @@ public class NewFriendActivity extends BaseActivity<ContactVM, ActivityNewFriend
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        removeCacheVM();
     }
 
     private void initView() {

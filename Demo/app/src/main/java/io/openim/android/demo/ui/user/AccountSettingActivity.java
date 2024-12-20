@@ -8,7 +8,6 @@ import io.openim.android.demo.vm.PersonalVM;
 import io.openim.android.ouicore.base.BaseActivity;
 import io.openim.android.ouicore.widget.CommonDialog;
 import io.openim.android.sdk.OpenIMClient;
-import io.openim.android.sdk.enums.AllowType;
 
 public class AccountSettingActivity extends BaseActivity<PersonalVM, ActivityAccountSettingBinding> {
 
@@ -23,24 +22,6 @@ public class AccountSettingActivity extends BaseActivity<PersonalVM, ActivityAcc
     }
 
     private void listener() {
-        view.changePassword.setOnClickListener(v -> {
-            startActivity(new Intent(this,ChangePasswordActivity.class));
-        });
-        view.languageSetting.setOnClickListener(v -> {
-            startActivity(new Intent(this,LanguageSettingActivity.class));
-        });
-        vm.userInfo.observe(this, extendUserInfo -> {
-            if (null == extendUserInfo) return;
-            view.slideButton.setCheckedWithAnimation(extendUserInfo.getGlobalRecvMsgOpt() == 2);
-            view.messageTone.setCheckedWithAnimation(extendUserInfo.getAllowBeep() == 1);
-            view.vibration.setCheckedWithAnimation(extendUserInfo.getAllowVibration() == 1);
-            view.notAdd.setCheckedWithAnimation(extendUserInfo.getAllowAddFriend() == AllowType.NotAllowed.value);
-        });
-        view.slideButton.setOnSlideButtonClickListener(isChecked -> vm.setGlobalRecvMessageOpt(isChecked));
-        view.messageTone.setOnSlideButtonClickListener(isChecked -> vm.setAllowBeep(isChecked));
-        view.vibration.setOnSlideButtonClickListener(isChecked -> vm.setAllowVibration(isChecked));
-        view.notAdd.setOnSlideButtonClickListener(isChecked -> vm.setAllowAddFriend(isChecked));
-
         view.clearRecord.setOnClickListener(v -> {
             CommonDialog commonDialog = new CommonDialog(this);
             commonDialog.getMainView().tips.setText(io.openim.android.ouicore.R.string.clear_chat_all_record);

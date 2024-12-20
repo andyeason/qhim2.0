@@ -153,7 +153,7 @@ public class LoginActivity extends BaseActivity<LoginVM, ActivityLoginBinding> i
             }
         });
         view.submit.setOnClickListener(v -> {
-            vm.areaCode.setValue("+" + view.loginContent.countryCode.getSelectedCountryCode());
+            vm.areaCode.setValue("+"+view.loginContent.countryCode.getSelectedCountryCode());
             waitDialog.show();
             vm.login(isVCLogin ? vm.pwd.getValue() : null, 3);
         });

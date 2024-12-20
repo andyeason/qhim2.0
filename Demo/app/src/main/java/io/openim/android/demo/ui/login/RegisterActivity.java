@@ -21,6 +21,9 @@ public class RegisterActivity extends BaseActivity<LoginVM, ActivityRegisterBind
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         bindVMByCache(LoginVM.class);
+        if (null == vm) {
+            bindVM(LoginVM.class);
+        }
         bindViewDataBinding(ActivityRegisterBinding.inflate(getLayoutInflater()));
         sink();
         view.setLoginVM(vm);

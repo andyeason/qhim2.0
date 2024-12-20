@@ -48,29 +48,6 @@ public class IBridgeImpl implements IConversationBridge {
         }
     }
 
-
-    @Override
-    public void setConversationRecvMessageOpt(int status, String cid) {
-        ChatVM chatVM = BaseApp.inst().getVMByCache(ChatVM.class);
-        if (null != chatVM)
-            chatVM.setConversationRecvMessageOpt(status, cid);
-    }
-
-    @Override
-    public void setNotDisturbStatusListener(LifecycleOwner owner, IMUtil.OnSuccessListener<Integer> OnSuccessListener) {
-        try {
-            ChatVM chatVM = BaseApp.inst().getVMByCache(ChatVM.class);
-            if (null != chatVM) {
-                chatVM.notDisturbStatus.observe((LifecycleOwner) chatVM.getContext(), integer -> {
-                    OnSuccessListener.onSuccess(integer);
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
     @Override
     public ConversationInfo getConversationInfo() {
         try {
@@ -84,32 +61,4 @@ public class IBridgeImpl implements IConversationBridge {
         }
         return null;
     }
-
-    @Override
-    public void pinConversation(ConversationInfo conversationInfo, boolean is) {
-        ContactListVM contactListVM = BaseApp.inst().getVMByCache(ContactListVM.class);
-        if (null != contactListVM) {
-            contactListVM.pinConversation(conversationInfo, is);
-        }
-    }
-
-    @Override
-    public void setConversationInfoChangeListener(LifecycleOwner owner, IMUtil.OnSuccessListener<ConversationInfo> OnSuccessListener) {
-        ChatVM chatVM = BaseApp.inst().getVMByCache(ChatVM.class);
-        if (null != chatVM) {
-            chatVM.conversationInfo.observe(owner, conversationInfo -> {
-                OnSuccessListener.onSuccess(conversationInfo);
-            });
-        }
-    }
-
-    @Override
-    public void clearCHistory(String id) {
-        ChatVM chatVM = BaseApp.inst().getVMByCache(ChatVM.class);
-        if (null != chatVM) {
-            chatVM.clearCHistory(id);
-        }
-    }
-
-
 }

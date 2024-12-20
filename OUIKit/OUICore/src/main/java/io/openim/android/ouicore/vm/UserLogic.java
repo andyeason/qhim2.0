@@ -38,7 +38,7 @@ public class UserLogic extends BaseVM {
     public State<ConnectStatus> connectStatus = new State<>(ConnectStatus.DEFAULT);
     public State<UserInfo> info = new State<>();
     //发现页
-    public State<String> discoverPageURL=new State<>("");
+    public State<String> discoverPageURL=new State<>("https://docs.openim.io/");
 
     public boolean isCacheUser() {
         return null!=LoginCertificate.getCache(BaseApp.inst());

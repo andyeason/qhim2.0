@@ -26,7 +26,13 @@ import io.openim.android.ouicore.widget.WaitDialog;
 import io.openim.android.sdk.OpenIMClient;
 import io.openim.android.sdk.enums.AllowType;
 import io.openim.android.sdk.listener.OnBase;
+import io.openim.android.sdk.models.FriendInfo;
+import io.openim.android.sdk.models.PublicUserInfo;
 import io.openim.android.sdk.models.UserInfo;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.functions.BiFunction;
 
 public class PersonalVM extends BaseViewModel {
     public WaitDialog waitDialog;
@@ -119,30 +125,61 @@ public class PersonalVM extends BaseViewModel {
         return this;
     }
 
+    public Observable<UserInfo> queryFriendInfoWithoutBlocked(String uid) {
+        return Observable.create(emitter -> {
+           List<String> uids = new ArrayList<>();
+           uids.add(uid);
+           OpenIMClient.getInstance().friendshipManager.getFriendsInfo(new OnBase<List<UserInfo>>() {
+               @Override
+               public void onError(int code, String error) {
+                   emitter.onError(new Exception(code+error));
+               }
+
+               @Override
+               public void onSuccess(List<UserInfo> data) {
+                   emitter.onNext(data.get(0));
+                   emitter.onComplete();
+               }
+           }, uids, false);
+        });
+    }
+
     public PersonalVM getUsersInfoWithCache(String id, String gid) {
-        OpenIMClient.getInstance().userInfoManager
-            .getUsersInfoWithCache(new OnBase<List<UserInfo>>() {
+        OpenIMClient.getInstance().userInfoManager.getUsersInfo(new OnBase<List<PublicUserInfo>>() {
                 @Override
-                public void onSuccess(List<UserInfo> data) {
+                public void onError(int code, String error) {
+                }
+
+                @Override
+                public void onSuccess(List<PublicUserInfo> data) {
                     if (!data.isEmpty()) {
-                        UserInfo u = data.get(0);
-                       userInfo.setValue(updateUserInfo(userInfo
-                           .val(), u));
+                        PublicUserInfo u = data.get(0);
+                        userInfo.setValue(updateUserInfo(userInfo
+                            .val(), u));
                     }
                 }
-            }, new ArrayList<>(Collections.singleton(id)), gid);
+            }, new ArrayList<>(Collections.singleton(id)));
         return this;
     }
 
-    private UserInfo updateUserInfo(UserInfo origin, UserInfo update) {
+    private UserInfo updateUserInfo(UserInfo origin, Object update) {
         try {
+            UserInfo updateInfo = new UserInfo();
+            if (update instanceof PublicUserInfo) {
+                updateInfo.setUserID(((PublicUserInfo)update).getUserID());
+                updateInfo.setNickname(((PublicUserInfo)update).getNickname());
+                updateInfo.setFaceURL(((PublicUserInfo)update).getFaceURL());
+                updateInfo.setEx(((PublicUserInfo)update).getEx());
+                updateInfo.setCreateTime(((PublicUserInfo)update).getCreateTime());
+            } else updateInfo = (UserInfo) update;
+
             if (null == origin) {
-                return update;
+                return updateInfo;
             }
             String json = JSONObject.toJSONString(origin);
             Map originMap = JSONObject.parseObject(json, Map.class);
 
-            String json2 = JSONObject.toJSONString(update);
+            String json2 = JSONObject.toJSONString(updateInfo);
             Map updateMap = JSONObject.parseObject(json2, Map.class);
 
             originMap.putAll(updateMap);
@@ -192,33 +229,6 @@ public class PersonalVM extends BaseViewModel {
     public void setBirthday(long birth) {
         userInfo.val().setBirth(birth);
         setSelfInfo(new Parameter().add("birth", birth));
-    }
-
-    public void setGlobalRecvMessageOpt(boolean isOpen) {
-        int globalRecvMsgOpt = isOpen ? 2 : 0;
-        userInfo.val().setGlobalRecvMsgOpt(globalRecvMsgOpt);
-        setSelfInfo(new Parameter().add("globalRecvMsgOpt", globalRecvMsgOpt));
-    }
-
-    public void setAllowBeep(boolean isOpen) {
-        int allow = isOpen ? 1 : 2;
-        userInfo.val().setAllowBeep(allow);
-        setSelfInfo(new Parameter().add("allowBeep", allow));
-    }
-
-    public void setAllowVibration(boolean isOpen) {
-        int allow = isOpen ? 1 : 2;
-        userInfo.val().setAllowVibration(allow);
-        setSelfInfo(new Parameter().add("allowVibration", allow));
-    }
-
-    public void setAllowAddFriend(boolean isOpen) {
-        try {
-            int allow = isOpen ? AllowType.NotAllowed.value : AllowType.Allowed.value;
-            userInfo.val().setAllowAddFriend(allow);
-            setSelfInfo(new Parameter().add("allowAddFriend", allow));
-        } catch (Exception ignored) {
-        }
     }
 
     public void setEmail(String email) {

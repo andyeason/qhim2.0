@@ -11,9 +11,11 @@ import com.cretin.www.cretinautoupdatelibrary.model.TypeConfig;
 import com.cretin.www.cretinautoupdatelibrary.model.UpdateConfig;
 import com.cretin.www.cretinautoupdatelibrary.utils.AppUpdateUtils;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.openim.android.ouicore.BuildConfig;
 import io.openim.android.ouicore.R;
 import io.openim.android.ouicore.api.NiService;
 import io.openim.android.ouicore.api.OneselfService;
@@ -29,6 +31,7 @@ import io.openim.android.ouicore.utils.L;
 import io.openim.android.ouicore.widget.WaitDialog;
 import io.reactivex.functions.Function;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
 public class UpdateApp  {
@@ -37,7 +40,7 @@ public class UpdateApp  {
             TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS);
 
         //当你希望使用传入model的方式，让插件自己解析并实现更新
-        UpdateConfig updateConfig = new UpdateConfig().setDebug(true)//是否是Debug模式
+        UpdateConfig updateConfig = new UpdateConfig().setDebug(BuildConfig.DEBUG)//是否是Debug模式
             .setDataSourceType(TypeConfig.DATA_SOURCE_TYPE_MODEL)//设置获取更新信息的方式
             .setShowNotification(true)//配置更新的过程中是否在通知栏显示进度
             .setNotificationIconRes(notificationIconRes)//配置通知栏显示的图标
@@ -56,10 +59,10 @@ public class UpdateApp  {
 
     public UpdateApp checkUpdate(Context context) {
         WaitDialog waitDialog=new WaitDialog(context);
+        if (BuildConfig.DEBUG) return this;
         waitDialog.show();
-        N.API(NiService.class).post("https://www.pgyer" + ".com/apiv2/app/check",
-            new Parameter().add("appKey", "8c728c547000546b886b6824369522bf").add("_api_key",
-                "6f43600074306e8bc506ed0cd3275e9e").buildFrom()).map(responseBody -> {
+        Map<String, RequestBody> requestParameter = new HashMap<>();
+        N.API(NiService.class).post("YOUR_UPDATE_URL", requestParameter).map(responseBody -> {
             String string = responseBody.string();
             Map map = GsonHel.fromJson(string, Map.class);
             if (map.containsKey("data") && null != map.get("data")) {

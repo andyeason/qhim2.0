@@ -2,6 +2,8 @@ package io.openim.android.ouicore.utils;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.NonNull;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -83,21 +85,21 @@ public class TimeUtil {
 
 
     @SuppressLint("DefaultLocale")
+    @NonNull
     public static String secondFormat(int second, String format) {
-        int hour = second / 3600; // 得到时
-        second = second % 3600;//剩余的秒数
-        int minute = second / 60;//得到分
-        second = second % 60;//剩余的秒
+        int sec = Math.max(0, second);
+        int hour = sec / 3600; // 得到时
+        sec = sec % 3600;//剩余的秒数
+        int minute = sec / 60;//得到分
+        sec = sec % 60;//剩余的秒
         if (null == format)
             format = secondFormat;
         if (hour > 0)
-            return String.format(format, hour, minute, second);
+            return String.format(format, hour, minute, sec);
         if (minute > 0)
             return String.format(format.substring(5),
-                minute, second);
-        if (second > 0)
-            return String.format(format.substring(10), second);
-        return "";
+                minute, sec);
+        return String.format(format.substring(10), sec);
     }
 
     public static String secondFormat(int seconds) {

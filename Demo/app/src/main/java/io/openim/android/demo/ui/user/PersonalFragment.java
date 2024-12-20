@@ -2,6 +2,7 @@ package io.openim.android.demo.ui.user;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,8 +61,10 @@ public class PersonalFragment extends BaseFragment implements Observer {
 
     private void initView() {
         user.info.observe(getActivity(),v-> {
-            view.avatar.load(v.getFaceURL(),v.getNickname());
-            view.name.setText(v.getNickname());
+            if (!TextUtils.isEmpty(v.getNickname())) {
+                view.avatar.load(v.getFaceURL(),v.getNickname());
+                view.name.setText(v.getNickname());
+            }
         });
         view.userId.setText("ID：" + BaseApp.inst().loginCertificate.userID);
     }
@@ -75,11 +78,13 @@ public class PersonalFragment extends BaseFragment implements Observer {
     private void listener() {
         view.avatar.setOnClickListener(v -> {
             PreviewMediaVM mediaVM = Easy.installVM(PreviewMediaVM.class);
-            PreviewMediaVM .MediaData mediaData =new PreviewMediaVM.MediaData(user.info.val().getNickname());
-            mediaData.mediaUrl=user.info.val().getFaceURL();
-            mediaVM.previewSingle(mediaData);
-            v.getContext().startActivity(
-                new Intent(v.getContext(), PreviewMediaActivity.class));
+            if (user.info.val() != null && !TextUtils.isEmpty(user.info.val().getNickname()) && !TextUtils.isEmpty(user.info.val().getFaceURL())) {
+                PreviewMediaVM .MediaData mediaData =new PreviewMediaVM.MediaData(user.info.val().getNickname());
+                mediaData.mediaUrl=user.info.val().getFaceURL();
+                mediaVM.previewSingle(mediaData);
+                v.getContext().startActivity(
+                    new Intent(v.getContext(), PreviewMediaActivity.class));
+            }
         });
         view.accountSetting.setOnClickListener(v->{
             startActivity(new Intent(getActivity(),AccountSettingActivity.class));

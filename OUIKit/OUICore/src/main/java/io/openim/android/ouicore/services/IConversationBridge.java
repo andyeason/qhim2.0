@@ -12,16 +12,5 @@ public interface IConversationBridge extends IProvider {
 
     void closeChatPage();
 
-
-    void setConversationRecvMessageOpt(int status, String cid);
-
-    void setNotDisturbStatusListener(LifecycleOwner owner, IMUtil.OnSuccessListener<Integer> OnSuccessListener);
-
     ConversationInfo getConversationInfo();
-
-    void pinConversation(ConversationInfo conversationInfo, boolean is);
-
-    void setConversationInfoChangeListener(LifecycleOwner owner, IMUtil.OnSuccessListener<ConversationInfo> OnSuccessListener);
-
-    void clearCHistory(String id);
 }

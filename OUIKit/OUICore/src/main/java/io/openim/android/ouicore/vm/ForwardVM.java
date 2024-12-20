@@ -7,6 +7,7 @@ import io.openim.android.ouicore.base.BaseApp;
 import io.openim.android.ouicore.base.vm.injection.BaseVM;
 import io.openim.android.ouicore.entity.LoginCertificate;
 import io.openim.android.ouicore.im.IMUtil;
+import io.openim.android.ouicore.utils.Constants;
 import io.openim.android.sdk.OpenIMClient;
 import io.openim.android.sdk.models.Message;
 

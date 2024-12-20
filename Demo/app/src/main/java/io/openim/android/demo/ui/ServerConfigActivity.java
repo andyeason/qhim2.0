@@ -46,9 +46,14 @@ public class ServerConfigActivity extends BaseActivity<BaseViewModel, ActivitySe
             if (!serverConfigVM.IM_WS_URL.getValue().equals(Constants.getImWsUrl()))
                 SharedPreferencesUtil.get(BaseApp.inst()).setCache("IM_WS_URL",
                     serverConfigVM.IM_WS_URL.getValue());
-            if (!serverConfigVM.STORAGE_TYPE.getValue().equals(Constants.getStorageType()))
+/*            if (!serverConfigVM.STORAGE_TYPE.getValue().equals(Constants.getStorageType()))
                 SharedPreferencesUtil.get(BaseApp.inst()).setCache("STORAGE_TYPE",
-                    serverConfigVM.STORAGE_TYPE.getValue());
+                    serverConfigVM.STORAGE_TYPE.getValue());*/
+
+            if (!serverConfigVM.LOG_LEVEL.getValue().equals(Constants.getLogLevel())) {
+                SharedPreferencesUtil.get(BaseApp.inst()).setCache(Constants.K_LOG_LEVEL,
+                    serverConfigVM.LOG_LEVEL.getValue());
+            }
 
             WaitDialog waitDialog = new WaitDialog(this);
             waitDialog.setNotDismiss();
@@ -77,7 +82,7 @@ public class ServerConfigActivity extends BaseActivity<BaseViewModel, ActivitySe
             if (isIP) {
                 setAddress("http://" + s + ":10002",
                     "http://" + s + ":10008/",
-                    "ws://" + s + ":10001");
+                    "ws://" + s + ":10004");
             } else {
                 setAddress(
                     "https://" + s + "/api",
@@ -108,5 +113,7 @@ public class ServerConfigActivity extends BaseActivity<BaseViewModel, ActivitySe
         public MutableLiveData<String> IM_WS_URL = new MutableLiveData<>(Constants.getImWsUrl());
         public MutableLiveData<String> STORAGE_TYPE =
             new MutableLiveData<>(Constants.getStorageType());
+        public MutableLiveData<String> LOG_LEVEL =
+             new MutableLiveData<>(Constants.getLogLevel());
     }
 }

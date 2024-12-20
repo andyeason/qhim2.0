@@ -7,9 +7,7 @@ import io.openim.android.ouicore.im.IM;
 
 public class Constants {
 
-    //    public static final String DEFAULT_HOST = "test-web.rentsoft.cn";//43
-//    public static final String DEFAULT_HOST = "web.rentsoft.cn";//121
-    public static final String DEFAULT_HOST = "43.128.72.19";
+    public static final String DEFAULT_HOST = "YourBaseUrl";
 
     //登录注册手机验 证服务器地址
     private static final String APP_AUTH_URL = "https://" + DEFAULT_HOST + "/chat/";
@@ -23,9 +21,10 @@ public class Constants {
     private static final String IM_API = "http://" + DEFAULT_HOST + ":10002";
     private static final String IM_WS = "ws://" + DEFAULT_HOST + ":10001";
     //--------------------
+    private static final String ipReg = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.[a-zA-Z]{2,}$";
 
     public static boolean getIsIp() {
-        return SharedPreferencesUtil.get(BaseApp.inst()).getBoolean("IS_IP", true);
+        return SharedPreferencesUtil.get(BaseApp.inst()).getBoolean("IS_IP", DEFAULT_HOST.matches(ipReg));
     }
 
     public static String getHost() {
@@ -60,6 +59,12 @@ public class Constants {
         String url = SharedPreferencesUtil.get(BaseApp.inst()).getString("STORAGE_TYPE");
         if (TextUtils.isEmpty(url)) return "minio";
         return url;
+    }
+
+    public static String getLogLevel() {
+        String level = SharedPreferencesUtil.get(BaseApp.inst()).getString(Constants.K_LOG_LEVEL);
+        if (TextUtils.isEmpty(level)) return "3";
+        return level;
     }
 
     //存储音频的文件夹
@@ -133,6 +138,10 @@ public class Constants {
     public static final String IS_SELECT_FRIEND = "isSelectFriend";
     //自定义消息类型
     public static final String K_CUSTOM_TYPE = "customType";
+    //日志级别
+    public static final String K_LOG_LEVEL = "logLevel";
+    // 阅后即焚存储标识
+    public static final String SP_Prefix_ReadVanish = "ReadVanish_";
 
 
     //加载中
@@ -141,9 +150,6 @@ public class Constants {
     public static class MsgType {
         //本地呼叫记录
         public static final int LOCAL_CALL_HISTORY = -110;
-        //会议邀请
-        public static final int CUSTOMIZE_MEETING = 905;
-
         public static final int callingInvite = 200;
         public static final int callingAccept = 201;
         public static final int callingReject = 202;
@@ -154,5 +160,10 @@ public class Constants {
     public static class MediaType {
         public static final String VIDEO = "video";
         public static final String AUDIO = "audio";
+    }
+
+    public static class ActivityResult {
+        public static final int SET_REMARK = 1000000;
+        public static final int DELETE_FRIEND = 1000001;
     }
 }

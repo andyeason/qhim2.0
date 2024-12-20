@@ -1,7 +1,9 @@
 package io.openim.android.demo.vm;
 
+import android.content.Context;
 import android.view.View;
 
+import androidx.core.util.Consumer;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 
@@ -24,22 +26,24 @@ import io.openim.android.ouicore.net.RXRetrofit.N;
 import io.openim.android.ouicore.net.RXRetrofit.NetObserver;
 import io.openim.android.ouicore.net.RXRetrofit.Parameter;
 import io.openim.android.ouicore.net.bage.GsonHel;
-import io.openim.android.ouicore.services.CallingService;
 import io.openim.android.ouicore.api.NiService;
 import io.openim.android.ouicore.api.OneselfService;
+import io.openim.android.ouicore.services.CallingService;
 import io.openim.android.ouicore.utils.Constants;
 import io.openim.android.ouicore.utils.Obs;
 import io.openim.android.ouicore.utils.Routes;
 import io.openim.android.ouicore.vm.NotificationVM;
 import io.openim.android.ouicore.vm.UserLogic;
+import io.openim.android.ouicore.widget.ProgressDialog;
+import io.openim.android.ouicore.widget.UILocker;
 import io.openim.android.ouicore.widget.WaitDialog;
 import io.openim.android.sdk.OpenIMClient;
 import io.openim.android.sdk.listener.OnBase;
 import io.openim.android.sdk.listener.OnConnListener;
 import io.openim.android.sdk.listener.OnConversationListener;
 import io.openim.android.sdk.models.ConversationInfo;
+import io.openim.android.sdk.models.ConversationReq;
 import io.openim.android.sdk.models.UserInfo;
-import open_im_sdk.Open_im_sdk;
 
 public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnListener, OnConversationListener {
 
@@ -48,12 +52,13 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
     private CallingService callingService;
     public State<Integer> totalUnreadMsgCount = new State<>();
     private final UserLogic userLogic = Easy.find(UserLogic.class);
+    private UILocker uiLocker;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void viewCreate() {
         IMEvent.getInstance().addConnListener(this);
         IMEvent.getInstance().addConversationListener(this);
-
         callingService = (CallingService) ARouter.getInstance().build(Routes.Service.CALLING).navigation();
         if (null != callingService) callingService.setOnServicePriorLoginCallBack(this::initDate);
 
@@ -77,6 +82,7 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
                 }
             });
         }
+        uiLocker = new UILocker();
 
     }
 
@@ -85,8 +91,6 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
         CrashReport.setDeviceId(context.get(), BaseApp.inst().loginCertificate.userID);
 
         initGlobalVM();
-
-        if (null != callingService) callingService.startAudioVideoService(getContext());
 
         getIView().initDate();
         getSelfUserInfo();
@@ -117,10 +121,8 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
             public void onSuccess(Map m) {
                 try {
                     HashMap<String, Object> map = (HashMap) m.get("config");
-                    int allowSendMsgNotFriend = Integer.parseInt((String) map.get("allowSendMsgNotFriend"));
-                    BaseApp.inst().loginCertificate.allowSendMsgNotFriend = allowSendMsgNotFriend == 1;
                     BaseApp.inst().loginCertificate.cache(BaseApp.inst());
-                    userLogic.discoverPageURL.setValue((String) map.get("discoverPageURL"));
+                    //userLogic.discoverPageURL.setValue((String) map.get("discoverPageURL"));
 
                 } catch (Exception ignored) {
                 }
@@ -146,6 +148,26 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
         certificate.allowVibration = userInfo.getAllowVibration() == 1;
 
         BaseApp.inst().loginCertificate.cache(BaseApp.inst());
+    }
+
+    /**
+     * Prevent the sdk from having no user’s data, just used to notice sdk get user info
+     * @param callback request finish
+     */
+    private void safetyEvent(Consumer<String> callback) {
+        OpenIMClient.getInstance().userInfoManager.getSelfUserInfo(new OnBase<UserInfo>() {
+            @Override
+            public void onError(int code, String error) {
+                if (callback != null)
+                    callback.accept(error + code);
+            }
+
+            @Override
+            public void onSuccess(UserInfo data) {
+                if (callback != null)
+                    callback.accept(null);
+            }
+        });
     }
 
     void getSelfUserInfo() {
@@ -176,13 +198,51 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
         });
     }
 
-    @Override
-    protected void releaseRes() {
-        IMEvent.getInstance().removeConnListener(this);
+    private void displaySyncProgressDialog(Context context) {
+        try {
+            if (context == null) return;
+            if (progressDialog == null) progressDialog = new ProgressDialog(context);
+            progressDialog.setMaxProgress(100);
+            progressDialog.setNotDismiss();
+            progressDialog.setInfo(BaseApp.inst().getString(io.openim.android.ouicore.R.string.syncing));
+            if (!progressDialog.isShowing()) progressDialog.show();
+        } catch (Exception e) {}
+
+    }
+
+    private void setSyncProgress(long progress) {
+        try {
+            if (progressDialog != null) {
+                progressDialog.setProgress((int) progress);
+                progressDialog.setInfo(progress + " %");
+            }
+        } catch (Exception e) {}
+    }
+
+    private void dismissSyncProgressDialog() {
+        if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
+    }
+
+    private void lockUI() {
+        if (null != uiLocker && null != context.get()) {
+            uiLocker.showTransparentDialog(context.get());
+        }
+    }
+
+    private void unLockUI() {
+        if (null != uiLocker) {
+            uiLocker.dismissTransparentDialog();
+        }
     }
 
     @Override
-    public void onConnectFailed(long code, String error) {
+    protected void releaseRes() {
+        IMEvent.getInstance().removeConnListener(this);
+        Easy.delete(NotificationVM.class);
+    }
+
+    @Override
+    public void onConnectFailed(int code, String error) {
         userLogic.connectStatus.setValue(UserLogic.ConnectStatus.CONNECT_ERR);
     }
 
@@ -194,6 +254,7 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
 
     @Override
     public void onConnecting() {
+        safetyEvent(null);
         userLogic.connectStatus.setValue(UserLogic.ConnectStatus.CONNECTING);
     }
 
@@ -208,6 +269,11 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
     }
 
     @Override
+    public void onUserTokenInvalid(String reason) {
+
+    }
+
+    @Override
     public void onConversationChanged(List<ConversationInfo> list) {
 
     }
@@ -218,18 +284,36 @@ public class MainVM extends BaseViewModel<LoginVM.ViewAction> implements OnConnL
     }
 
     @Override
-    public void onSyncServerFailed() {
+    public void onSyncServerFailed(boolean reinstalled) {
+        safetyEvent(null);
         userLogic.connectStatus.setValue(UserLogic.ConnectStatus.SYNC_ERR);
+        if (reinstalled) {
+            dismissSyncProgressDialog();
+        }
     }
 
     @Override
-    public void onSyncServerFinish() {
+    public void onSyncServerProgress(long progress) {
+        setSyncProgress(progress);
+    }
+
+    @Override
+    public void onSyncServerFinish(boolean reinstalled) {
         userLogic.connectStatus.setValue(UserLogic.ConnectStatus.DEFAULT);
+        getTotalUnreadMsgCount();
+        if (reinstalled) {
+            unLockUI();
+            dismissSyncProgressDialog();
+        }
     }
 
     @Override
-    public void onSyncServerStart() {
+    public void onSyncServerStart(boolean reinstalled) {
         userLogic.connectStatus.setValue(UserLogic.ConnectStatus.SYNCING);
+        if (reinstalled) {
+            lockUI();
+            displaySyncProgressDialog(context.get());
+        }
     }
 
     @Override

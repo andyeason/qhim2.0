@@ -86,18 +86,18 @@ public class TailInputEditText extends EmojiEditText {
                 int spanEnd = tailInputEditText.getText().getSpanEnd(characterStyle);
                 spanStart += 1;
                 tailInputEditText.getText().delete(spanStart, spanEnd);
-            }
-            if (characterStyle instanceof ForegroundColorSpan) {
-                //表示@消息
-                Iterator<AtUser> iterator = chatVM.atUsers.val().iterator();
-                while (iterator.hasNext()) {
-                    AtUser atUser = iterator.next();
-                    try {
-                        if (atUser.spanHashCode == characterStyle.hashCode()) {
-                            iterator.remove();
+                if (characterStyle instanceof ForegroundColorSpan) {
+                    //表示@消息
+                    Iterator<AtUser> iterator = chatVM.atUsers.val().iterator();
+                    while (iterator.hasNext()) {
+                        AtUser atUser = iterator.next();
+                        try {
+                            if (atUser.spanHashCode == characterStyle.hashCode() ) {
+                                iterator.remove();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
             }

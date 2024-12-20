@@ -36,9 +36,6 @@ public class MsgExpand {
     // 呼叫时长
     public String callDuration;
     // ------
-
-    //会议邀请信息
-    public MeetingInfo meetingInfo;
     //自定义表情
     public CustomEmojiEntity customEmoji;
     //发送消息进度

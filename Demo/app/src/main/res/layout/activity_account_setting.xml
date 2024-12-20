@@ -50,131 +50,6 @@
                 android:orientation="vertical">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/not_disturb"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <io.openim.android.ouicore.widget.SlideButton
-                        android:id="@+id/slideButton"
-                        android:layout_width="38dp"
-                        android:layout_height="23dp" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/message_tone"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <io.openim.android.ouicore.widget.SlideButton
-                        android:id="@+id/messageTone"
-                        android:layout_width="38dp"
-                        android:layout_height="23dp" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/vibration"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <io.openim.android.ouicore.widget.SlideButton
-                        android:id="@+id/vibration"
-                        android:layout_width="38dp"
-                        android:layout_height="23dp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:background="@drawable/sty_radius_6_white"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/not_be_added"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <io.openim.android.ouicore.widget.SlideButton
-                        android:id="@+id/notAdd"
-                        android:layout_width="38dp"
-                        android:layout_height="23dp" />
-
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/blackList"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
@@ -204,35 +79,6 @@
 
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/languageSetting"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/language_setting"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@mipmap/ic_right" />
-
-                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -241,35 +87,6 @@
                 android:layout_marginBottom="10dp"
                 android:background="@drawable/sty_radius_6_white"
                 android:orientation="vertical">
-
-                <LinearLayout
-                    android:id="@+id/changePassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@color/white"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="22dp"
-                    android:paddingRight="22dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/change_password"
-                        android:textColor="#ff333333"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#ff999999"
-                        android:textSize="14sp" />
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@mipmap/ic_right" />
-                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/clearRecord"
